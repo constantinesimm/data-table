@@ -136,6 +136,83 @@ class DataTable extends HTMLElement {
 		return tableBody;
 	}
 	
+	/**
+	 * handle actions methods
+	 * Click - row and head cell
+	 * Input - search input element
+	 */
+	
+	// handle table sort
+	handleRowsSort(target, root) {
+		// sort logic
+		const compare = {
+			asc: (a,b) => (a[col] > b[col]) ? 1 : ((b[col] > a[col]) ? -1 : 0),
+			desc: (a,b) => (a[col] > b[col]) ? -1 : ((b[col] > a[col]) ? 1 : 0)
+		};
+		
+		const col = target.dataset.field;           // head cell clicked
+		const orderDir = target.dataset.order;      // get order direction
+		const tbody = root.querySelector('tbody');  // get shadowDOM element
+		
+		// sorted array (copy of source data)
+		const sortedData = this.data.slice().sort(compare[orderDir]);
+		
+		// replace table body with sorted array data
+		tbody.parentNode.replaceChild(this.createTableBody(this.columns, sortedData), tbody);
+	}
+	
+	// handle show extended data from row
+	handleRowClick(target, root) {
+		const template = (row) => `
+        <div class="card">
+            <div class="card-body">
+                <h4>Выбран пользователь <b>${ row.firstName } ${ row.lastName }</b></h4>
+                <p>Описание:<br><textarea>${ row.description }</textarea></p>
+                <p>Адрес проживания: <b>${ row.address.streetAddress }</b></p>
+                <p>Город: <b>${ row.address.city }</b></p>
+                <p>Провинция/штат: <b>${ row.address.state }</b></p>
+                <p>Индекс: <b>${ row.address.zip} </b></p>
+            </div>
+        </div>
+        `;
+		
+		const extendedBlock = root.querySelector('.wcdt-container__expanded');
+		const row = target.parentElement.dataset.index;
+		
+		// If current row is extended - hide block after second click on same row
+		if (extendedBlock.dataset.open === row) extendedBlock.removeAttribute('data-open');
+		else {
+			
+			//show block on row click
+			extendedBlock.dataset.open = row;
+			extendedBlock.innerHTML = template(this.data[row]);
+		}
+	}
+	
+	// handle table data search
+	handleSearchInput(searchValue, root) {
+		const rows = root.querySelectorAll('tbody > tr');
+		let matched;
+		
+		for(let i = 0; i < rows.length; i++) {
+			const cells = rows[i].querySelectorAll('td');
+			
+			for (let j = 0; j < cells.length; j++) {
+				if (cells[j].innerHTML.toLowerCase().match(searchValue.toLowerCase())) matched = true;
+			}
+			
+			if (matched) {
+				rows[i].style.display = '';
+				matched = false;
+			} else rows[i].style.display = 'none';
+		}
+	}
+	
+	// fetch data from data-url attribute. Return Promise
+	GETjson(uri) {
+		return fetch(uri).then(response => response.json());
+	}
+	
 	// create styles tag with rules
 	createComponentStyle() {
 		const style = DataTable.createElem('style');
@@ -234,83 +311,6 @@ class DataTable extends HTMLElement {
         }`;
 		
 		return style;
-	}
-	
-	/**
-	 * handle actions methods
-	 * Click - row and head cell
-	 * Input - search input element
-	 */
-	
-	// handle table sort
-	handleRowsSort(target, root) {
-		// sort logic
-		const compare = {
-			asc: (a,b) => (a[col] > b[col]) ? 1 : ((b[col] > a[col]) ? -1 : 0),
-			desc: (a,b) => (a[col] > b[col]) ? -1 : ((b[col] > a[col]) ? 1 : 0)
-		};
-		
-		const col = target.dataset.field;           // head cell clicked
-		const orderDir = target.dataset.order;      // get order direction
-		const tbody = root.querySelector('tbody');  // get shadowDOM element
-		
-		// sorted array (copy of source data)
-		const sortedData = this.data.slice().sort(compare[orderDir]);
-		
-		// replace table body with sorted array data
-		tbody.parentNode.replaceChild(this.createTableBody(this.columns, sortedData));
-	}
-	
-	// handle show extended data from row
-	handleRowClick(target, root) {
-		const template = (row) => `
-        <div class="card">
-            <div class="card-body">
-                <h4>Выбран пользователь <b>${ row.firstName } ${ row.lastName }</b></h4>
-                <p>Описание:<br><textarea>${ row.description }</textarea></p>
-                <p>Адрес проживания: <b>${ row.address.streetAddress }</b></p>
-                <p>Город: <b>${ row.address.city }</b></p>
-                <p>Провинция/штат: <b>${ row.address.state }</b></p>
-                <p>Индекс: <b>${ row.address.zip} </b></p>
-            </div>
-        </div>
-        `;
-		
-		const extendedBlock = root.querySelector('.wcdt-container__expanded');
-		const row = target.parentElement.dataset.index;
-		
-		// If current row is extended - hide block after second click on same row
-		if (extendedBlock.dataset.open === row) extendedBlock.removeAttribute('data-open');
-		else {
-			
-			//show block on row click
-			extendedBlock.dataset.open = row;
-			extendedBlock.innerHTML = template(this.data[row]);
-		}
-	}
-	
-	// handle table data search
-	handleSearchInput(searchValue, root) {
-		const rows = root.querySelectorAll('tbody > tr');
-		let matched;
-		
-		for(let i = 0; i < rows.length; i++) {
-			const cells = rows[i].querySelectorAll('td');
-			
-			for (let j = 0; j < cells.length; j++) {
-				if (cells[j].innerHTML.toLowerCase().match(searchValue.toLowerCase())) matched = true;
-			}
-			
-			if (matched) {
-				rows[i].style.display = '';
-				matched = false;
-			} else rows[i].style.display = 'none';
-		}
-	}
-	
-	// fetch data from data-url attribute. Return Promise
-	GETjson(uri) {
-		return fetch(uri).then(response => response.json());
 	}
 }
 
