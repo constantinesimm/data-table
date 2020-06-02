@@ -258,7 +258,7 @@ class DataTable extends HTMLElement {
 		const sortedData = this.data.slice().sort(compare[orderDir]);
 		
 		// replace table body with sorted array data
-		tbody.parentNode.replaceChild(this.createTableBody(this.columns, sortedData), tbody)
+		tbody.parentNode.replaceChild(this.createTableBody(this.columns, sortedData));
 	}
 	
 	// handle show extended data from row
